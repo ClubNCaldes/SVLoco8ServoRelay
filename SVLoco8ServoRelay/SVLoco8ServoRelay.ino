@@ -472,12 +472,7 @@ boolean processPeerPacket()
     #ifdef DEBUG
     Serial.print("READ ");Serial.print(LnPacket->px.d2);Serial.print(" ");Serial.print(LnPacket->px.d2+1);Serial.print(" ");Serial.println(LnPacket->px.d2+2);
     #endif
-    delay(50);
     sendPeerPacket(svtable.data[LnPacket->px.d2], svtable.data[LnPacket->px.d2+1], svtable.data[LnPacket->px.d2+2]);
-    #ifdef DEBUG
-    Serial.println(">> OPC_PEER_XFER answer sent");
-    Serial.println("=============================================");
-    #endif
     return (true);
   }
   
@@ -550,11 +545,9 @@ boolean processPeerPacket()
     }
 
     //Answer packet        
-    delay(50);
     sendPeerPacket(0x00, 0x00, LnPacket->px.d4);
     #ifdef DEBUG
     Serial.println(">> OPC_PEER_XFER answer sent");
-    Serial.println("=============================================");
     #endif
     return (true);
   }
