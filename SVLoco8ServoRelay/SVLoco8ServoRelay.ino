@@ -335,8 +335,8 @@ void notifyPower( uint8_t State )
   if (State)
   {
     for (n=0;n<NUM_SERVOS;n++)   
-          LocoNet.send(OPC_SW_REP, svtable.svt.pincfg[n+8].value1, svtable.svt.pincfg[n+8].value2);          
-          //LocoNet.send(OPC_INPUT_REP, svtable.svt.pincfg[n+8].value1, svtable.svt.pincfg[n+8].value2);          
+          //LocoNet.send(OPC_SW_REP, svtable.svt.pincfg[n+8].value1, svtable.svt.pincfg[n+8].value2);          
+          LocoNet.send(OPC_INPUT_REP, svtable.svt.pincfg[n+8].value1, svtable.svt.pincfg[n+8].value2);          
   }
 }
 
@@ -537,7 +537,7 @@ boolean processPeerPacket()
       }   
         
       #ifdef DEBUG
-      Serial.print("ESCRITURA "); Serial.print(LnPacket->px.d2); Serial.print(" <== ");
+      Serial.print("WRITE "); Serial.print(LnPacket->px.d2); Serial.print(" <== ");
       Serial.print(LnPacket->px.d4); Serial.print(" | ");
       Serial.print(LnPacket->px.d4, HEX); Serial.print(" | ");
       Serial.println(LnPacket->px.d4, BIN);
