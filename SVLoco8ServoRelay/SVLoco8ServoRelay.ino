@@ -61,10 +61,10 @@
 
 //Uncomment this line to debug through the serial monitor
 #define DEBUG
-#define VERSION 102
+#define VERSION 203
 
 #define SVTABLE_MAX_RECORD 125
-#define SERVO_LAPSE 10  //millis between servo movements
+#define SERVO_LAPSE 20  //millis between servo movements
 #define NUM_SERVOS 8
 
 // called this way, it uses the default address 0x40
@@ -116,7 +116,7 @@ void setup()
   
   // First initialize the LocoNet interface
   LocoNet.init(7);
-
+  
   //Load config from EEPROM
   for (n=0;n<SVTABLE_MAX_RECORD;n++)
     svtable.data[n]=EEPROM.read(n);
@@ -124,7 +124,6 @@ void setup()
   //Load right addresses moving the right bits
   for (n=0;n<16;n++)
   {
-    //TODO set right addresses for inputs
     directions[n]=svtable.svt.pincfg[n].value1;
     bitWrite(directions[n],7,bitRead(svtable.svt.pincfg[n].value2,0));
     bitWrite(directions[n],8,bitRead(svtable.svt.pincfg[n].value2,1));
@@ -157,30 +156,21 @@ void setup()
     EEPROM.write(0,VERSION);
     EEPROM.write(1, svtable.svt.addr_low);
     EEPROM.write(2, svtable.svt.addr_high);
-
-    //Center servos if no previous configuration
-    for (n=0;n<NUM_SERVOS;n++)
-    {
-      servoCurrentPos[n]=63;
-      positionServo(n,63);
-      //digitalWrite(PIN_RELAY+n, LOW);
-      servo.setPWM(n+8, 0, 0);
-    }
   }
   else
   {
     //Position servos and set retro signals   
     #ifdef DEBUG    
-    Serial.println("SETTING INITIAL POSITION OF SERVOS...");    
+    Serial.println("SETTING INITIAL POSITION OF SERVOS TO POS1...");    
     #endif  
     for (n=0;n<NUM_SERVOS;n++)
     {
-      servoCurrentPos[n]=svtable.data[101+n*3];
-      moveServo(n,svtable.data[101+n*3+1]);
-      delay(200);      
-      moveServo(n,svtable.data[101+n*3]);
-      bitWrite(svtable.svt.pincfg[n+8].value2,4,0);              
-      LocoNet.send(OPC_INPUT_REP, svtable.svt.pincfg[n+8].value1, svtable.svt.pincfg[n+8].value2);
+        servoCurrentPos[n]=svtable.data[101+n*3+1];
+        #ifdef DEBUG    
+        Serial.print("Servo "); Serial.print(n+1); Serial.print(" to Pos1 "); Serial.println(svtable.data[101+n*3]);
+        #endif        
+        moveServo(n,svtable.data[101+n*3]);
+        delay(200);
     }
   }
 }
@@ -234,7 +224,12 @@ void moveServo(int pNumServo, int pDestPos)
   int steps;
   bool cambiado=false;
   int midgrades;
+  int initPos=0;
+  int finPos=0;
 
+  //Ignore if no address configured (address 1 is the minimum)
+  if (directions[pNumServo]<2) return;
+  
   //if servo already in desired position exit
   if (pDestPos==servoCurrentPos[pNumServo]) return;
 
@@ -242,8 +237,7 @@ void moveServo(int pNumServo, int pDestPos)
   
   //read configuration servo speed 0 - 5
   steps=5-svtable.data[103+pNumServo*3];
-  //calculate mid position to change polarization relay
-  midgrades=(pDestPos+servoCurrentPos[pNumServo])/2;
+
 
   #ifdef DEBUG    
   Serial.print("MOVING SERVO ");Serial.println(pNumServo+1);
@@ -252,13 +246,20 @@ void moveServo(int pNumServo, int pDestPos)
   Serial.print("To       : ");Serial.println(pDestPos);
   Serial.print("Speed    : ");Serial.println(steps);
   #endif     
-    
-  if (servoCurrentPos[pNumServo]<pDestPos)
+
+  //To move servos with the shield ressolution
+  initPos=map(servoCurrentPos[pNumServo],1, 127, SERVOMIN, SERVOMAX);
+  finPos=map(pDestPos,1, 127, SERVOMIN, SERVOMAX);
+  
+  if (initPos<finPos)
   {
+    //calculate mid position to change polarization relay
+    midgrades=(finPos+initPos)/2;
+  
     // increment grades    
-    for (grades=servoCurrentPos[pNumServo];grades<=pDestPos;grades++)
+    for (grades=initPos;grades<=finPos;grades++)
     {
-      positionServo(pNumServo,grades);
+      servo.setPWM(pNumServo, 0, grades);
       delay(SERVO_LAPSE*steps);
 
       //Relay polarization      
@@ -288,10 +289,13 @@ void moveServo(int pNumServo, int pDestPos)
   }
   else
   {
+    //calculate mid position to change polarization relay
+    midgrades=(initPos+finPos)/2;
+  
     // decrement grades
-    for (grades=servoCurrentPos[pNumServo];grades>=pDestPos;grades--)
+    for (grades=initPos;grades>=finPos;grades--)
     {
-      positionServo(pNumServo,grades);
+      servo.setPWM(pNumServo, 0, grades);
       delay(SERVO_LAPSE*steps);
 
       //Relay polarization      
@@ -301,13 +305,17 @@ void moveServo(int pNumServo, int pDestPos)
         {
           //digitalWrite(PIN_RELAY+pNumServo, HIGH);
           servo.setPWM(pNumServo+8, 0, 4096);
+          #ifdef DEBUG 
           Serial.print("FROG ON ");Serial.println(pNumServo+8);
+          #endif
         }
         else
         {
           //digitalWrite(PIN_RELAY+pNumServo, LOW);
           servo.setPWM(pNumServo+8, 4096, 0);
+          #ifdef DEBUG 
           Serial.print("FROG OFF ");Serial.println(pNumServo+8);
+          #endif
         }
           
         cambiado=true;
