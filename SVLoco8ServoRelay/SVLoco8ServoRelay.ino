@@ -268,24 +268,24 @@ void moveServo(int pNumServo, int pDestPos)
         if (bitRead(svtable.svt.pincfg[pNumServo].value2,5)==0)
         {
           //digitalWrite(PIN_RELAY+pNumServo, LOW);
-          servo.setPWM(pNumServo+8, 4096, 0);
+          servo.setPWM(pNumServo+NUM_SERVOS, 4096, 0);
           #ifdef DEBUG    
-          Serial.print("FROG OFF ");Serial.println(pNumServo+8);
+          Serial.print("FROG OFF ");Serial.println(pNumServo+NUM_SERVOS);
           #endif     
         }
         else
         {
           //digitalWrite(PIN_RELAY+pNumServo, HIGH);
-          servo.setPWM(pNumServo+8, 0, 4096);
+          servo.setPWM(pNumServo+NUM_SERVOS, 0, 4096);
           #ifdef DEBUG    
-          Serial.print("FROG ON ");Serial.println(pNumServo+8);
+          Serial.print("FROG ON ");Serial.println(pNumServo+NUM_SERVOS);
           #endif     
         } 
         cambiado=true;  
       }        
-    }
-    bitWrite(svtable.svt.pincfg[pNumServo+8].value2,4,1);
-    LocoNet.send(OPC_INPUT_REP, svtable.svt.pincfg[pNumServo+8].value1, svtable.svt.pincfg[pNumServo+8].value2);          
+    }    
+    bitWrite(svtable.svt.pincfg[pNumServo+NUM_SERVOS].value2,4,1);
+    LocoNet.send(OPC_INPUT_REP, svtable.svt.pincfg[pNumServo+NUM_SERVOS].value1, svtable.svt.pincfg[pNumServo+NUM_SERVOS].value2);          
   }
   else
   {
@@ -304,28 +304,29 @@ void moveServo(int pNumServo, int pDestPos)
         if (bitRead(svtable.svt.pincfg[pNumServo].value2,5)==0)
         {
           //digitalWrite(PIN_RELAY+pNumServo, HIGH);
-          servo.setPWM(pNumServo+8, 0, 4096);
+          servo.setPWM(pNumServo+NUM_SERVOS, 0, 4096);
           #ifdef DEBUG 
-          Serial.print("FROG ON ");Serial.println(pNumServo+8);
+          Serial.print("FROG ON ");Serial.println(pNumServo+NUM_SERVOS);
           #endif
         }
         else
         {
           //digitalWrite(PIN_RELAY+pNumServo, LOW);
-          servo.setPWM(pNumServo+8, 4096, 0);
+          servo.setPWM(pNumServo+NUM_SERVOS, 4096, 0);
           #ifdef DEBUG 
-          Serial.print("FROG OFF ");Serial.println(pNumServo+8);
+          Serial.print("FROG OFF ");Serial.println(pNumServo+NUM_SERVOS);
           #endif
         }
           
         cambiado=true;
       }
     }
-    bitWrite(svtable.svt.pincfg[pNumServo+8].value2,4,0);
-    LocoNet.send(OPC_INPUT_REP, svtable.svt.pincfg[pNumServo+8].value1, svtable.svt.pincfg[pNumServo+8].value2);          
+    bitWrite(svtable.svt.pincfg[pNumServo+NUM_SERVOS].value2,4,0);
+    LocoNet.send(OPC_INPUT_REP, svtable.svt.pincfg[pNumServo+NUM_SERVOS].value1, svtable.svt.pincfg[pNumServo+NUM_SERVOS].value2);
   }
   servoCurrentPos[pNumServo]=pDestPos;
-
+  //Disconnect servo current
+  servo.setPWM(pNumServo, 0, 4096);
   digitalWrite(13, LOW);
 }
 
@@ -343,8 +344,8 @@ void notifyPower( uint8_t State )
   if (State)
   {
     for (n=0;n<NUM_SERVOS;n++)   
-          //LocoNet.send(OPC_SW_REP, svtable.svt.pincfg[n+8].value1, svtable.svt.pincfg[n+8].value2);          
-          LocoNet.send(OPC_INPUT_REP, svtable.svt.pincfg[n+8].value1, svtable.svt.pincfg[n+8].value2);          
+          //LocoNet.send(OPC_SW_REP, svtable.svt.pincfg[n+NUM_SERVOS].value1, svtable.svt.pincfg[n+NUM_SERVOS].value2);
+          LocoNet.send(OPC_INPUT_REP, svtable.svt.pincfg[n+NUM_SERVOS].value1, svtable.svt.pincfg[n+NUM_SERVOS].value2); 
   }
 }
 
