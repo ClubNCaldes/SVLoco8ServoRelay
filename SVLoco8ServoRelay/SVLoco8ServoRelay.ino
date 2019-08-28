@@ -65,7 +65,7 @@
 
 #define SVTABLE_MAX_RECORD 125
 #define SERVO_LAPSE 20  //millis between servo movements
-#define NUM_SERVOS 8
+#define NUM_SERVOS 8    //number of servos (depending on number of pwm boards installed)
 
 // called this way, it uses the default address 0x40
 Adafruit_PWMServoDriver servo = Adafruit_PWMServoDriver();
@@ -345,7 +345,8 @@ void notifyPower( uint8_t State )
   {
     for (n=0;n<NUM_SERVOS;n++)   
           //LocoNet.send(OPC_SW_REP, svtable.svt.pincfg[n+NUM_SERVOS].value1, svtable.svt.pincfg[n+NUM_SERVOS].value2);
-          LocoNet.send(OPC_INPUT_REP, svtable.svt.pincfg[n+NUM_SERVOS].value1, svtable.svt.pincfg[n+NUM_SERVOS].value2); 
+          if (directions[n]>1)
+            LocoNet.send(OPC_INPUT_REP, svtable.svt.pincfg[n+NUM_SERVOS].value1, svtable.svt.pincfg[n+NUM_SERVOS].value2); 
   }
 }
 
@@ -400,7 +401,6 @@ void notifySwitchRequest( uint16_t Address, uint8_t Output, uint8_t Direction )
           //Servo to the other side
           moveServo(n,svtable.data[102+3*n]);
         }
-        break;
       }
     }
   }
